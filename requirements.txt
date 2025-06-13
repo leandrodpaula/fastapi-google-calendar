@@ -1,0 +1,32 @@
+# Web Framework
+fastapi
+
+# Data Validation
+pydantic
+
+# ORM
+sqlalchemy
+
+# Dependency Injection
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Environment Variables
+python-dotenv
+
+# HTTP Client
+httpx
+
+# Testing
+pytest
+pytest-cov
+pytest-asyncio
+httpx # for testing FastAPI apps
+
+# Linters and Formatters
+flake8
+black
+isort
+
+# Other
+uvicorn[standard] # ASGI server
