@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Optional, List # Added List
 import datetime
 import uuid # To generate a fake Google Event ID
 
 from src.application.services.google_calendar_service import GoogleCalendarService
+from src.domain.entities.participant import Participant # Added Participant
 
 class GoogleCalendarAdapter(GoogleCalendarService):
     """
@@ -23,9 +24,9 @@ class GoogleCalendarAdapter(GoogleCalendarService):
         title: str,
         start_datetime: datetime.datetime,
         end_datetime: datetime.datetime,
-        description: Optional[str] = None
+        description: Optional[str] = None,
+        attendees: Optional[List[Participant]] = None # Added attendees parameter
         # In a real implementation, you might pass more parameters:
-        # attendees: Optional[List[str]] = None,
         # location: Optional[str] = None,
         # timezone: str = "UTC"
     ) -> Optional[str]:
@@ -37,6 +38,18 @@ class GoogleCalendarAdapter(GoogleCalendarService):
         print(f"  Description: {description}")
         print(f"  Start: {start_datetime.isoformat()}")
         print(f"  End:   {end_datetime.isoformat()}")
+
+        if attendees:
+            formatted_attendees = []
+            for p in attendees:
+                if p.email:
+                    formatted_attendees.append({"email": p.email})
+            if formatted_attendees:
+                print(f"  Attendees (for Google Calendar): {formatted_attendees}")
+            else:
+                print("  No attendees with email addresses provided.")
+        else:
+            print("  No attendees provided for the event.")
 
         # Simulate API call latency (optional)
         # await asyncio.sleep(0.1)

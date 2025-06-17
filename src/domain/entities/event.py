@@ -1,6 +1,8 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 import datetime
+
+from src.domain.entities.participant import Participant
 
 class Event(BaseModel):
     id: Optional[str] = Field(None, alias='_id') # MongoDB uses _id
@@ -9,6 +11,7 @@ class Event(BaseModel):
     description: Optional[str] = None
     start_datetime: datetime.datetime
     end_datetime: datetime.datetime
+    participants: Optional[List[Participant]] = None
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
 
