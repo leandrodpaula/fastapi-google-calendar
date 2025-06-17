@@ -22,7 +22,8 @@ class CreateEventUseCase:
             title=event_data.title,
             description=event_data.description,
             start_datetime=event_data.start_datetime,
-            end_datetime=event_data.end_datetime
+            end_datetime=event_data.end_datetime,
+            attendees=event_data.participants # Added participants
         )
 
         if not google_event_id:

@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List
 import datetime
+
+from src.domain.entities.participant import Participant # Added import
 
 class GoogleCalendarService(ABC):
     """
@@ -13,8 +15,9 @@ class GoogleCalendarService(ABC):
         title: str,
         start_datetime: datetime.datetime,
         end_datetime: datetime.datetime,
-        description: Optional[str] = None
-        # Add other relevant parameters like attendees, location, etc., as needed
+        description: Optional[str] = None,
+        attendees: Optional[List[Participant]] = None # Added attendees
+        # Add other relevant parameters like location, etc., as needed
     ) -> Optional[str]:
         """
         Creates an event in Google Calendar.

@@ -1,9 +1,10 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock # For mocking async and regular methods
+from unittest.mock import AsyncMock, MagicMock, call # For mocking async and regular methods, and call
 import datetime
 
 from src.application.use_cases.create_event_use_case import CreateEventUseCase
 from src.domain.entities.event import Event
+from src.domain.entities.participant import Participant # Added Participant import
 from src.domain.repositories.event_repository import EventRepository
 from src.application.services.google_calendar_service import GoogleCalendarService
 
@@ -66,7 +67,8 @@ async def test_create_event_success(
         title=sample_event_data.title,
         description=sample_event_data.description,
         start_datetime=sample_event_data.start_datetime,
-        end_datetime=sample_event_data.end_datetime
+        end_datetime=sample_event_data.end_datetime,
+        attendees=None # Explicitly pass None for attendees as per updated signature
     )
 
     # Check that the event passed to save has the google_event_id
@@ -104,3 +106,58 @@ async def test_create_event_google_calendar_fails(
 
     mock_google_calendar_service.create_event.assert_called_once()
     mock_event_repository.save.assert_not_called()
+
+
+@pytest.fixture
+def sample_participants_list() -> list[Participant]:
+    return [
+        Participant(email="test1@example.com", cell_phone="111222333"),
+        Participant(cell_phone="444555666") # No email
+    ]
+
+@pytest.mark.asyncio
+async def test_create_event_with_participants_success(
+    create_event_use_case: CreateEventUseCase,
+    mock_event_repository: AsyncMock,
+    mock_google_calendar_service: AsyncMock,
+    sample_event_data: Event, # Base event data without participants
+    sample_participants_list: list[Participant]
+):
+    """
+    Test successful event creation with participants.
+    Ensures Google Calendar service is called with attendees and repository save includes participants.
+    """
+    fake_google_event_id = "gc_67890"
+    event_with_participants = sample_event_data.model_copy(update={"participants": sample_participants_list})
+
+    # Configure mocks
+    mock_google_calendar_service.create_event.return_value = fake_google_event_id
+
+    async def save_side_effect(event_to_save: Event):
+        event_to_save.id = "repo_12345"
+        assert event_to_save.google_event_id == fake_google_event_id
+        assert event_to_save.participants == sample_participants_list # Key assertion for repo
+        return event_to_save
+    mock_event_repository.save.side_effect = save_side_effect
+
+    # Execute the use case
+    created_event = await create_event_use_case.execute(event_with_participants)
+
+    # Assertions for Google Calendar Service call
+    mock_google_calendar_service.create_event.assert_called_once_with(
+        title=event_with_participants.title,
+        description=event_with_participants.description,
+        start_datetime=event_with_participants.start_datetime,
+        end_datetime=event_with_participants.end_datetime,
+        attendees=sample_participants_list # Key assertion for calendar service
+    )
+
+    # Assertions for Event Repository call (side effect already checks participants)
+    mock_event_repository.save.assert_called_once_with(event_with_participants)
+
+    # General assertions on the returned event
+    assert created_event is not None
+    assert created_event.id == "repo_12345"
+    assert created_event.google_event_id == fake_google_event_id
+    assert created_event.title == event_with_participants.title
+    assert created_event.participants == sample_participants_list
